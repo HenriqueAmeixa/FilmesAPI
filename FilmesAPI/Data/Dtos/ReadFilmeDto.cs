@@ -19,4 +19,4 @@ namespace FilmesAPI.Data.Dtos
         public DateTime HoradaConsulta { get; set; }
     }
 }
-}
+
