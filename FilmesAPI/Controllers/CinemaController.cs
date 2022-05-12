@@ -3,6 +3,7 @@ using FilmesAPI.Data;
 using FilmesAPI.Data.Dtos;
 using FilmesAPI.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace FilmesAPI.Controllers
@@ -21,11 +22,18 @@ namespace FilmesAPI.Controllers
         [HttpPost]
         public IActionResult AdicionaCinema([FromBody] CreateCinemaDto CinemaDto)
         {
-            Cinema cinema = _mapper.Map<Cinema>(CinemaDto);
+            try
+            {
+                Cinema cinema = _mapper.Map<Cinema>(CinemaDto);
+                _context.Cinemas.Add(cinema);
+                _context.SaveChanges();
+                return CreatedAtAction(nameof(RecuperaCinemaPorId), new { Id = cinema.Id }, cinema);
+            }
+            catch
+            {
+                return Problem();
+            }
 
-            _context.Cinemas.Add(cinema);
-            _context.SaveChanges();
-            return CreatedAtAction(nameof(RecuperaCinemaPorId), new { Id = cinema.Id }, cinema);
         }
         [HttpGet]
         public IActionResult RecuperarCinemas()
