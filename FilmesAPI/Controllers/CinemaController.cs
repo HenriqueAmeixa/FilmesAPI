@@ -1,8 +1,9 @@
 ﻿using AutoMapper;
 using FilmesAPI.Data;
-using FilmesAPI.Data.Dtos.Cinema;
+using FilmesAPI.Data.Dtos;
 using FilmesAPI.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace FilmesAPI.Controllers
@@ -21,17 +22,37 @@ namespace FilmesAPI.Controllers
         [HttpPost]
         public IActionResult AdicionaCinema([FromBody] CreateCinemaDto CinemaDto)
         {
-            Cinema cinema = _mapper.Map<Cinema>(CinemaDto);
+            try
+            {
+                Cinema cinema = _mapper.Map<Cinema>(CinemaDto);
+                _context.Cinemas.Add(cinema);
+                _context.SaveChanges();
+                return CreatedAtAction(nameof(RecuperaCinemaPorId), new { Id = cinema.Id }, cinema);
+            }
+            catch
+            {
+                return Problem();
+            }
 
-            _context.Cinemas.Add(cinema);
-            _context.SaveChanges();
-            return CreatedAtAction(nameof(RecuperaCinemaPorId), new { Id = cinema.Id }, cinema);
         }
         [HttpGet]
-        public IActionResult RecuperarCinemas()
+        public IActionResult RecuperarCinemas([FromQuery] string nomeDoFilme)
         {
-            return Ok(_context.Cinemas);
-
+            List<Cinema> cinemas = _context.Cinemas.ToList();
+            if(cinemas == null)
+            {
+                return NotFound();
+            }
+            if (string.IsNullOrEmpty(nomeDoFilme))
+            {
+                IEnumerable<Cinema> query = from cinema in cinemas
+                                            where cinema.Sessoes.Any(sessao =>
+                                            sessao.Filme.Titulo == nomeDoFilme)
+                                            select cinema;
+                cinemas = query.ToList();
+            }
+            List<ReadCinemaDto>readDto = _mapper.Map<List<ReadCinemaDto>>(cinemas);
+            return Ok(readDto);
         }
         [HttpGet("{id}")]
         public IActionResult RecuperaCinemaPorId(int id)
